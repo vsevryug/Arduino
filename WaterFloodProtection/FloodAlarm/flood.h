@@ -10,4 +10,4 @@ const short sensorOkState = 2;
 const short sensorBrokenState = 4;
 const short sensorAlarmState = 8;
 
-const int MotorTurnTimeMillisec = 1000;
+const int MotorTurnTimeMillisec = 2300;

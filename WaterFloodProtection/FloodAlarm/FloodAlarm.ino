@@ -4,9 +4,10 @@ const short pinBathroomSensor = 4;
 const short pinKitchenSensor = 2;
 
 // 220 or 1k resistor connected to LEDs pins
-const short pinGreenLed = 8;   //1k    Ok i.e. No Flood
-const short pinYellowLed = 9;  //220   Attention i.e. Line is broken
-const short pinRedLed = 10;    //1k    Alarm or Flood was detected
+const int pinGreenLed = 8;   //1k    Ok i.e. No Flood
+const int pinYellowLed = 9;  //220   Attention i.e. Line is broken
+const int pinRedLed = 10;    //1k    Alarm or Flood was detected
+const int pinGuardLed = A1;
 
 //
 const short pinMotorLeft = 12;
@@ -19,15 +20,23 @@ boolean isInGuardMode = false; //isValveOpened
 
 void setup()                    // run once, when the sketch starts
 {
-  pinMode(pinGreenLed, OUTPUT);
-  pinMode(pinYellowLed, OUTPUT);
-  pinMode(pinRedLed, OUTPUT);
-  pinMode(pinMotorLeft, OUTPUT);
-  pinMode(pinMotorRight, OUTPUT);
+  setupOutputLowPin(pinGreenLed);
+  setupOutputLowPin(pinYellowLed);
+  setupOutputLowPin(pinRedLed);
+  setupOutputLowPin(pinGuardLed);
+  
+  setupOutputLowPin(pinMotorLeft);
+  setupOutputLowPin(pinMotorRight);
+  
   stopMotor();
   Serial.begin(9600);
   Serial.println("start");      // a personal quirk
   delay(2000); 
+}
+
+void setupOutputLowPin(int pin) {
+  pinMode(pin, OUTPUT);
+  digitalWrite(pin, LOW);
 }
 
 void loop()                     // run over and over again
@@ -66,19 +75,21 @@ void readButtons() {
       isButtonPressed = true;
       if(abs(sensorValue - 342) < 50) { // Open button pressed
         Serial.println(">>>Open<<<");
-  //      turnMotor(1);
+        turnMotor(1);
         isInGuardMode = false;
       } else if (sensorValue - 513 < 50) { // Close button pressed
         Serial.println(">>>Close<<<");
-  //      turnMotor(0);
+        turnMotor(0);
         isInGuardMode = false;
       } else if (sensorValue - 1018 < 50) { // Reset button pressed
         Serial.println(">>>Reset<<<");
-        isInGuardMode = true;
+        isInGuardMode = !isInGuardMode;
+        
       }
       Serial.println(ms);
       Serial.println(prevButtonTime);
       Serial.println(ms - prevButtonTime);
+      Serial.print("isInGuardMode=");Serial.println(isInGuardMode);
       prevButtonTime = ms;
     }
   }
@@ -120,6 +131,14 @@ void lightLed(int floodState) {
   }
   if(floodState & sensorAlarmState) {
     digitalWrite(pinRedLed, HIGH);
+  }
+  
+  if(isInGuardMode){
+//    Serial.println("In Guard Mode");
+    digitalWrite(pinGuardLed, HIGH);
+  } else {
+//    Serial.println("!In Guard Mode");    
+    digitalWrite(pinGuardLed, LOW);
   }
   
   ledState = floodState;
